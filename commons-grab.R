@@ -1,4 +1,5 @@
 library(rjson)
+library(RCurl)
 
 # main function downloads images into a directory similar to imgur downloader
 
@@ -68,9 +69,7 @@ commonsDL <- function(category, useragent, hiRES = FALSE) {
   
   # Default values set in this function only temporarily. 
   
-  fetchCommonsCat <- function(category, useragent, hiRES) {
-    # Mediawiki requires an informative user agent. Yours should be distinct
-    options(HTTPUserAgent= useragent )
+  fetchCommonsCat <- function(category, hiRES) {
     cat.final <- genCompCat(category)
     # we return a list to make generating filenames easier
     if (hiRES) {  
@@ -90,6 +89,11 @@ commonsDL <- function(category, useragent, hiRES = FALSE) {
                   )
     }
   }
+  
+# Mediawiki requires an informative user agent. Yours should be distinct
+options(RCurlOptions = list(useragent = useragent)) 
+  
+# Call the functions to actually fetch and d/l the data
 final.list <- fetchCommonsCat(category, useragent, hiRES)
 # Remove those pesky underscores
 dirtitle <-  gsub("_", " ", category)
