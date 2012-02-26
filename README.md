@@ -1,6 +1,6 @@
 ## Image Downloading software
 
-Made mostly to scratch an itch. There are plenty of browser addons, python libraries and the like to download images from various sites, but I'm more comfortable in R. So her we have it!
+Made mostly to scratch an itch. There are plenty of browser addons, python libraries and the like to download images from various sites, but I'm more comfortable in R. So here we have it!
 
 ### So far
 
