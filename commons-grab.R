@@ -2,7 +2,15 @@ library(rjson)
 
 # Enumerate categories from the Mediawiki API
 
-# Images on commons are in ns = 6
+# Images on commons are in ns = 6 eventually I may just remove the arg
+
+# 3 subordinate functions and one main routine 
+# genCompCat, fetchfullURL both lead into
+# fetchCommonsCat, which generates a list of flat URLs for 
+# pictures on Commons. 
+
+
+# Continue argument is added for categories w/ greater than 500 members
 
 genCompCat <- function(category, namespace) {
   genCategoryURL <- function(category, namespace, continue = NULL) {
@@ -26,9 +34,18 @@ genCompCat <- function(category, namespace) {
     cat.list.init <- fromJSON(file = genCategoryURL(category, namespace, continue = unlist(cat.list.init$`query-continue`)[[1]]))
     cat.unform <- append(cat.unform, unlist(cat.list.init$query$categorymembers)[names(unlist(cat.list.init$query$categorymembers)) == "title"])
   }
+  # API requires underscores instead of spaces
   gsub(" ", "_", cat.unform)
 }
 
+# the iiprop parameters are doing the real work here. 
+# hiRES flag is there because some Commons images are
+# LARGE and you may not want to d/l them in a cat accidentally
+
+# if hiRES is false then the top 10% of pics in size are dropped
+# This doesn't actually occur in this function (which works 1 input at a time)
+
+# This can fail for some image URLs which show up as redirects but don't have a redirect target.
 
 fetchfullURL <- function(baseurl, hiRES) {
   url.gen <- paste(
@@ -51,6 +68,7 @@ fetchfullURL <- function(baseurl, hiRES) {
   }
 }
 
+# Default values set in this function only temporarily. 
 
 fetchCommonsCat <- function(category, namespace = 6, useragent, hiRES = FALSE) {
   # Mediawiki requires an informative user agent. Yours should be distinct
