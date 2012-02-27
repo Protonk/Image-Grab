@@ -33,6 +33,4 @@ getimgurURL<- function(url, appended = "", destdir) {
 
 for (i in 1:length(args)) getimgurURL(url = args[i], appended = i, destdir = destdir)
 
-closeAllConnections()
-
 q()
