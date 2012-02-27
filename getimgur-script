@@ -6,7 +6,9 @@ args <- commandArgs(trailingOnly = TRUE)
 library(XML)
 library(RCurl)
 
-getimgurURL<- function(url, appended = "") {
+destdir <- "/Your/File/Path/Here"
+
+getimgurURL<- function(url, appended = "", destdir) {
   # Parse out images waiting to be shown in preview gallery 
   # These exist regardless of the size of the album
   thumbs <- getNodeSet(xmlRoot(htmlTreeParse(url)), "//body//img[@class='unloaded thumb-title']")
@@ -15,7 +17,7 @@ getimgurURL<- function(url, appended = "") {
   # Thumbnails on imgur are denoted with a trailing "s" in the filename
   url.final <- sub("s.", ".", thumbs.uri, fixed = TRUE)
   # Album title becomes folder title
-  dirtitle <- paste("~/Desktop/to be xfrd/", 
+  dirtitle <- paste(destdir, 
   					unlist(getNodeSet(xmlRoot(htmlTreeParse(url)), "//head//title"))[[3]],
   					sep = "")
   if (grepl("Photo Album", dirtitle)) dirtitle <- paste(dirtitle, appended, sep = "_")
@@ -29,7 +31,7 @@ getimgurURL<- function(url, appended = "") {
   }
 }
 
-for (i in 1:length(args)) getimgurURL(url = args[i], appended = i)
+for (i in 1:length(args)) getimgurURL(url = args[i], appended = i, destdir = destdir)
 
 closeAllConnections()
 
