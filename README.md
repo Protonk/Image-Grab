@@ -10,6 +10,11 @@ Scripts to be added for different services as needed.
 
 - Does what it says on the tin. Imgur only loads a certain number of thumbnails for large galleries, but the links to the remainder are in the page source. Simple, requires the XML library.
 
+##### getimgur-script
+
+- Sample shell script accepting urls as arguments on the command line. Some minimal checking for duplicate file names done. 
+
+
 #### commons-grab.R
 
 - Less simple. Basically done. Grabs categories from Wikimedia Commons. Uses rjson. Mediawiki API provides the full resolution URL if you ask nicely, so no fiddling about w/ XML. Comes with an argument to exclude very high res photos, defines as the top 10% in size for a given category.
