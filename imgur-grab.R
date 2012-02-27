@@ -11,6 +11,7 @@ getimgurURL<- function(url) {
   url.final <- sub("s.", ".", thumbs.uri, fixed = TRUE)
   # Album title becomes folder title
   dirtitle <- unlist(getNodeSet(xmlRoot(htmlTreeParse(url)), "//head//title"))[[3]]
+  if (file.exists(dirtitle)) return(NULL)
   filetitles <- paste(dirtitle, basename(url.final), sep="/")
   dir.create(dirtitle)
   file.create(filetitles)
@@ -19,4 +20,3 @@ getimgurURL<- function(url) {
   	writeBin(getBinaryURL(url.final[i]), filetitles[i])
   }
 }
-
