@@ -17,9 +17,9 @@ getimgurURL<- function(url, appended = "", destdir) {
   # Thumbnails on imgur are denoted with a trailing "s" in the filename
   url.final <- sub("s.", ".", thumbs.uri, fixed = TRUE)
   # Album title becomes folder title
-  dirtitle <- paste(destdir, 
-  					unlist(getNodeSet(xmlRoot(htmlTreeParse(url)), "//head//title"))[[3]],
-  					sep = "")
+  dirtitle <- paste(destdir,
+                    unlist(getNodeSet(xmlRoot(htmlTreeParse(url)), "//head//title"))[[3]],
+                    sep = "")
   if (grepl("Photo Album", dirtitle)) dirtitle <- paste(dirtitle, appended, sep = "_")
   if (file.exists(dirtitle)) return(NULL)
   filetitles <- paste(dirtitle, basename(url.final), sep="/")
