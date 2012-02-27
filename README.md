@@ -8,11 +8,15 @@ Scripts to be added for different services as needed.
 
 #### imgur-grab.R
 
-- Does what it says on the tin. Imgure only loads a certain number of thumbnails for large galleries, but the links to the remainder are in the page source. Simple, requires the XML library.
+- Does what it says on the tin. Imgur only loads a certain number of thumbnails for large galleries, but the links to the remainder are in the page source. Simple, requires the XML library.
 
 #### commons-grab.R
 
-- Less simple. Not done yet. Grabs categories from Wikimedia Commons. Uses rjson. Mediawiki API provides the full resolution URL if you ask nicely, so no fiddling about w/ XML.
+- Less simple. Basically done. Grabs categories from Wikimedia Commons. Uses rjson. Mediawiki API provides the full resolution URL if you ask nicely, so no fiddling about w/ XML. Comes with an argument to exclude very high res photos, defines as the top 10% in size for a given category.
+
+### Rough edges
+
+Both scripts (so far) create files and directories in the working directory for R. If the category or album names are duplicated, this may result in files being written to the wrong place. More of a problem with imgur as categories on wikipedia by definition have distinct names. 
 
 ### License and such
 
