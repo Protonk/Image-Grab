@@ -13,6 +13,7 @@ Scripts to be added for different services as needed.
 ##### getimgur-script
 
 - Sample shell script accepting urls as arguments on the command line. Some minimal checking for duplicate file names done. 
+- Not intended to be plug and play and may be removed in the future. But the basic structure is there. 
 
 
 #### commons-grab.R
@@ -21,7 +22,7 @@ Scripts to be added for different services as needed.
 
 ### Rough edges
 
-Both scripts (so far) create files and directories in the working directory for R. If the category or album names are duplicated, this may result in files being written to the wrong place. More of a problem with imgur as categories on wikipedia by definition have distinct names. 
+Both R scripts create files and directories in the working directory for R. If the category or album names are duplicated, this may result in files being written to the wrong place. More of a problem with imgur as categories on wikipedia by definition have distinct names. 
 
 ### License and such
 
