@@ -12,7 +12,7 @@ getimgurURL<- function(url) {
   # Album title becomes folder title
   dirtitle <- unlist(getNodeSet(xmlRoot(htmlTreeParse(url)), "//head//title"))[[3]]
   if (file.exists(dirtitle)) return(NULL)
-  filetitles <- paste(dirtitle, basename(url.final), sep="/")
+  filetitles <- file.path(dirtitle, basename(url.final))
   dir.create(dirtitle)
   file.create(filetitles)
   #I could vectorize this but the local processor isn't the bottleneck here

@@ -97,7 +97,7 @@ options(RCurlOptions = list(useragent = useragent))
 final.list <- fetchCommonsCat(category, useragent, hiRES)
 # Remove those pesky underscores
 dirtitle <-  gsub("_", " ", category)
-filetitles <- paste(dirtitle, sub("File:", "", gsub("_", " ",final.list$name), fixed = TRUE), sep="/")
+filetitles <- file.path(dirtitle, sub("File:", "", gsub("_", " ",final.list$name), fixed = TRUE))
 dir.create(dirtitle)
 file.create(filetitles)
 for (i in seq_along(final.list$name)) {writeBin(getBinaryURL(final.list$target[i]), filetitles[i])}
