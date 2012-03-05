@@ -3,11 +3,10 @@ library(RCurl)
 
 getimgurURL<- function(url) {
   preparse <- htmlTreeParse(url, useInternalNodes = TRUE)
-  # Parse out images waiting to be shown in preview gallery 
   # Some galleries use different containers
   if (xpathApply(preparse, "//body//div[@id='content']", xmlAttrs)[[1]][2] %in% "outside album") container <- "//body//img[@class='unloaded thumb-title-embed']"
   else container <- "//body//img[@class='unloaded thumb-title']"
-  # Grab image urls
+  # Grab image urls. Walks through list of image divs
   thumbs.uri <- unlist(lapply(xpathApply(preparse, container, xmlAttrs), function(x) getElement(x, grep("^data-src", names(x)))))
   # Thumbnails on imgur are denoted with a trailing "s" in the filename
   url.final <- sub("s.", ".", thumbs.uri, fixed = TRUE)
