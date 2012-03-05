@@ -2,21 +2,22 @@ library(XML)
 library(RCurl)
 
 getimgurURL<- function(url) {
+  preparse <- htmlTreeParse(url, useInternalNodes = TRUE)
   # Parse out images waiting to be shown in preview gallery 
-  # These exist regardless of the size of the album
-  thumbs <- getNodeSet(xmlRoot(htmlTreeParse(url)), "//body//img[@class='unloaded thumb-title']")
+  # Some galleries use different containers
+  if (xpathApply(preparse, "//body//div[@id='content']", xmlAttrs)[[1]][2] %in% "outside album") container <- "//body//img[@class='unloaded thumb-title-embed']"
+  else container <- "//body//img[@class='unloaded thumb-title']"
   # Grab image urls
-  thumbs.uri <- mapply(function(x) thumbs[[x]]$attributes[['data-src']], 1:length(thumbs))
+  thumbs.uri <- unlist(lapply(xpathApply(preparse, container, xmlAttrs), function(x) getElement(x, grep("^data-src", names(x)))))
   # Thumbnails on imgur are denoted with a trailing "s" in the filename
   url.final <- sub("s.", ".", thumbs.uri, fixed = TRUE)
   # Album title becomes folder title
-  dirtitle <- unlist(getNodeSet(xmlRoot(htmlTreeParse(url)), "//head//title"))[[3]]
+  dirtitle <- gsub("*(\n)|*(\t)", replacement = "", xpathApply(preparse, "//head//title", xmlValue)[[1]])
   if (file.exists(dirtitle)) return(NULL)
   filetitles <- file.path(dirtitle, basename(url.final))
   dir.create(dirtitle)
   file.create(filetitles)
-  #I could vectorize this but the local processor isn't the bottleneck here
-  for (i in seq_along(thumbs)) {
+  for (i in seq_along(url.final)) {
   	writeBin(getBinaryURL(url.final[i]), filetitles[i])
   }
 }
