@@ -34,8 +34,8 @@ APIresultGen <- function(input, method = c("gallery", "photos", "size")) {
 	# Almost all API calls return the results in "<string>" The two lines here are ugly but
 	# XML is stored as links to larger documents so for now this is a more flexible 
 	# subsetting method. 
-	unform <- xpathApply(xmlTreeParse(init.api.url, useInternalNodes = TRUE), "//string", xmlValue)[[1]]
-	block.out <- xmlRoot(htmlTreeParse(gsub(pattern = "*(\n)|*(\t)|*(\")", replacement = "", x = unform), useInternalNodes = TRUE))
+	unform <- xpathApply(xmlParse(init.api.url), "//string", xmlValue)[[1]]
+	block.out <- xmlRoot(htmlParse(gsub(pattern = "*(\n)|*(\t)|*(\")", replacement = "", x = unform)))
 	# Thankfully we can just use xpathApply to pull out what we want.
 	# everything except photo returns a length 1 character vector
 	switch(match.arg(method),
@@ -56,8 +56,8 @@ titleGen <- function(url.input) {
                           )
   # Same code as above. This is a little frustrating as I can't just pick it out yet
   # but I'll come back to it.
-  unform <- xpathApply(xmlTreeParse(title.api.url, useInternalNodes = TRUE), "//string", xmlValue)[[1]]
-  block.out <- xmlRoot(htmlTreeParse(gsub(pattern = "*(\n)|*(\t)|*(\")", replacement = "", x = unform), useInternalNodes = TRUE))
+  unform <- xpathApply(xmlParse(title.api.url), "//string", xmlValue)[[1]]
+  block.out <- xmlRoot(htmlParse(gsub(pattern = "*(\n)|*(\t)|*(\")", replacement = "", x = unform)))
   gsub("*(\n)|*(\t)", replacement = "", xpathApply(block.out, "//title", xmlValue))
 }
 
