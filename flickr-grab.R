@@ -21,15 +21,15 @@ APIresultGen <- function(input, method = c("gallery", "photos", "size")) {
   
 	api.base <- "http://api.flickr.com/services/rest/?"
 	method.value <- switch(match.arg(method),
-						   gallery = paste("method=flickr.urls.lookupGallery&url", stripPath(input), sep = "="),
-						   photos = paste("method=flickr.galleries.getPhotos&gallery_id", input, sep = "="),
-						   size = paste("method=flickr.photos.getSizes&photo_id", input, sep = "=")
-						   )
+			       gallery = paste("method=flickr.urls.lookupGallery&url", stripPath(input), sep = "="),
+			       photos = paste("method=flickr.galleries.getPhotos&gallery_id", input, sep = "="),
+		               size = paste("method=flickr.photos.getSizes&photo_id", input, sep = "=")
+			       )
 	init.api.url <- paste(api.base, method.value,
-						      paste("api_key", flickr_API, sep = "="),
-						      "format=xmlrpc",
-			   			    sep = "&"
-			   			    )
+			      paste("api_key", flickr_API, sep = "="),
+			      "format=xmlrpc",
+			      sep = "&"
+			      )
   
 	# Almost all API calls return the results in "<string>" The two lines here are ugly but
 	# XML is stored as links to larger documents so for now this is a more flexible 
