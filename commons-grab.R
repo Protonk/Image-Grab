@@ -1,111 +1,77 @@
-library(rjson)
+library(XML)
 library(RCurl)
 
-# main function downloads images into a directory similar to imgur downloader
+# Wrapper for XML package, see http://stackoverflow.com/questions/7269006/r-xml-package-how-to-set-the-user-agent
+wikixmlParse <- function(url, ...) {
+  temp <- tempfile()
+  download.file(url, temp, quiet = TRUE)
+  xml.out <- xmlParse(temp, ...)
+  unlink(temp)
+  return(xml.out)
+}
 
-commonsDL <- function(category, useragent, hiRES = FALSE) {
+# combine category URL creating and listing because we don't need to store
+# the URL anywhere
+genCategoryXML <- function(category, continue = NULL) {
+  api.base <-"http://commons.wikimedia.org/w/api.php?format=xml&action=query&list=categorymembers&cmnamespace=6&cmlimit=500&cmtype=file&cmprop=title"
+  url.gen <- paste(api.base, paste("cmtitle", "=", "Category:", category, sep = ""), sep= "&")
+  if(is.null(continue)) return(wikixmlParse(url.gen))
+  url.gen <- paste(url.gen, paste("cmcontinue", "=", continue, sep = ""), sep = "&")
+  return(wikixmlParse(url.gen))
+}
 
-  # 3 subordinate functions:
-  #   genCompCat, fetchfullURL both lead into
-  #   fetchCommonsCat, which generates a list of flat URLs for 
-  #   pictures on Commons.
-  genCompCat <- function(category) {
-    # Continue argument is added for categories w/ greater than 500 members
-    genCategoryURL <- function(category, continue = NULL) {
-      url.start <-paste(
-        "http://commons.wikimedia.org/w/api.php?", 
-        "action=query",
-        "list=categorymembers",
-        paste("cmtitle", "=", "Category:", category, sep = ""),
-        # Images on commons are in ns = 6
-        "cmnamespace=6",
-        "cmlimit=500",
-        "cmtype=file",
-        "cmprop=title",
-        "format=json",
-        sep = "&")
-      if (is.null(continue)) url.gen <- url.start
-      else url.gen <- paste(url.start, paste("cmcontinue", "=", continue, sep = ""), sep = "&")  
-    }
-    cat.list.init <- fromJSON(file = genCategoryURL(category))
-    cat.unform <- unlist(cat.list.init$query$categorymembers)[names(unlist(cat.list.init$query$categorymembers)) == "title"]
-    while (!is.null(cat.list.init$`query-continue`)) {
-      cat.list.init <- fromJSON(file = genCategoryURL(category, continue = unlist(cat.list.init$`query-continue`)[[1]]))
-      cat.unform <- append(cat.unform, unlist(cat.list.init$query$categorymembers)[names(unlist(cat.list.init$query$categorymembers)) == "title"])
-    }
-    # API requires underscores instead of spaces
-    gsub(" ", "_", cat.unform)
+
+enumCat <- function(category) {
+  cont <- NULL
+  init.xml <- genCategoryXML(category)
+  cat.char <- unlist(xpathApply(init.xml, "//cm", xmlGetAttr, "title"))
+  # 500 items is the API limit, so we need to keep traversing segments of 
+  # the category until there is no more continue parameter
+  while (length(getNodeSet(genCategoryXML(category, continue = cont), "//categorymembers")) > 1) {
+    cont <- xmlGetAttr(getNodeSet(genCategoryXML(category, continue = cont), "//categorymembers")[[2]], "cmcontinue")
+    cat.char <- append(cat.char, unlist(xpathApply(genCategoryXML(category, continue = cont), "//cm", xmlGetAttr, "title")))
   }
-  
-  # the iiprop parameters are doing the real work here. 
-  # hiRES flag is there because some Commons images are
-  # LARGE and you may not want to d/l them in a cat accidentally
-  
-  # if hiRES is false then the top 10% of pics in size are dropped
-  # This doesn't actually occur in this function (which works 1 input at a time)
-  
-  # This can fail for some image URLs which show up as redirects but don't have a redirect target.
-  
-  fetchfullURL <- function(baseurl, hiRES) {
-    url.gen <- paste(
-      "http://commons.wikimedia.org/w/api.php?", 
-      "action=query",
-      paste("titles", "=", baseurl, sep = ""),
-      "prop=imageinfo",
-      "iiprop=url|size",
-      "format=json",
-      sep = "&")
-    if (hiRES) {
-      pageJSON <- fromJSON(file = sub("|size", "", url.gen))
-      unname(unlist(pageJSON$query$pages)[grep("imageinfo.url", names(unlist(pageJSON$query$pages)))])
-    } 
-    else {
-      pageJSON <- fromJSON(file = url.gen)
-      cbind(unname(unlist(pageJSON$query$pages)[grep("imageinfo.url", names(unlist(pageJSON$query$pages)))]), 
-            unname(unlist(pageJSON$query$pages)[grep("imageinfo.size", names(unlist(pageJSON$query$pages)))])
-           )
-    }
+  # image titles don't give us URLs, we need another API call for that
+  # we set up the urls here (because we want to save them)
+  image.api.url <- paste("http://commons.wikimedia.org/w/api.php?action=query&prop=imageinfo&iiprop=url|size&format=xml",
+                         paste("titles", "=", gsub(" ", "_", cat.char), sep = ""),
+                         sep = "&")
+  return(list(title = cat.char, api = image.api.url))
+}
+
+# hiRES indicates that we want all the images. Some commons images are
+# enormous (100mb) and we might want to exclude them
+
+fetchFullURL <- function(api.url, hiRES) {
+  fin.image.url <- xmlGetAttr(getNodeSet(wikixmlParse(api.url), "//ii")[[1]], "url")
+  if (!hiRES) image.size <- xmlGetAttr(getNodeSet(wikixmlParse(api.url), "//ii")[[1]], "size")
+  else image.size <- NA
+  return(cbind(image.size, fin.image.url))
+}
+
+# main function, calls the above functions as needed
+
+getCommonsImg <- function(category, hiRES = FALSE, useragent) {
+  # Wikimedia API will reject for blank user agent strings
+  options(HTTPUserAgent=useragent)
+  cat.out <- enumCat(category)
+  # titles and download urls
+  fetch.out <- unname(t(sapply(cat.out$api, fetchFullURL, hiRES)))
+  # drop everything above 90% of max size
+  loRES <- which(as.numeric(fetch.out[, 1]) <= quantile(as.numeric(fetch.out[, 1]), 0.9))
+  if (!hiRES) {
+    urls.fin <- fetch.out[loRES, 2]
+    titles.fin <- cat.out$title[loRES]
   }
-  
-  # Default values set in this function only temporarily. 
-  
-  fetchCommonsCat <- function(category, hiRES) {
-    cat.final <- genCompCat(category)
-    # we return a list to make generating filenames easier
-    if (hiRES) {  
-        resolved.URL <- sapply(cat.final, fetchfullURL, hiRES = hiRES)
-        return( list( target = unname(resolved.URL),
-                      name = cat.final)
-                    )
-    }  
-    else {
-      # pay attention to the dimensions when this is fed through sapply()
-      comb.res <- sapply(cat.final, fetchfullURL, hiRES = hiRES)
-      resolved.URL <- comb.res[1, ]
-      size.pic <- as.numeric(comb.res[2, ])
-      resolved.URL <- resolved.URL[which(size.pic <= quantile(size.pic, 0.9))]
-      return( list( target = unname(resolved.URL),
-                    name = cat.final[which(size.pic <= quantile(size.pic, 0.9))])
-                  )
-    }
+  else {
+    urls.fin <- fetch.out[, 2]
+    titles.fin <- cat.out$title
   }
-  
-# Mediawiki requires an informative user agent. Yours should be distinct
-options(RCurlOptions = list(useragent = useragent)) 
-  
-# Call the functions to actually fetch and d/l the data
-final.list <- fetchCommonsCat(category, useragent, hiRES)
-# Remove those pesky underscores
-dirtitle <-  gsub("_", " ", category)
-filetitles <- file.path(dirtitle, sub("File:", "", gsub("_", " ",final.list$name), fixed = TRUE))
-dir.create(dirtitle)
-file.create(filetitles)
-for (i in seq_along(final.list$name)) {writeBin(getBinaryURL(final.list$target[i]), filetitles[i])}
-}  
-
-  
-
-
-
-  
-
+  dirtitle <-  gsub("_", " ", category)
+  filetitles <- file.path(dirtitle, sub("File:", "", titles.fin, fixed = TRUE))
+  dir.create(dirtitle)
+  file.create(filetitles)
+  for (i in seq_along(urls.fin)) {
+    writeBin(getBinaryURL(urls.fin[i]), filetitles[i])
+  }
+}
