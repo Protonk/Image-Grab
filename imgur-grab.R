@@ -7,7 +7,7 @@ getimgurURL<- function(url) {
   if (xpathApply(preparse, "//body//div[@id='content']", xmlAttrs)[[1]][2] %in% "outside album") container <- "//body//img[@class='unloaded thumb-title-embed']"
   else container <- "//body//img[@class='unloaded thumb-title']"
   # Grab image urls. Walks through list of image divs
-  thumbs.uri <- unlist(lapply(xpathApply(preparse, container, xmlAttrs), function(x) getElement(x, grep("^data-src", names(x)))))
+  thumbs.uri <- unlist(xpathApply(preparse, container, xmlGetAttr, "data-src"))
   # Thumbnails on imgur are denoted with a trailing "s" in the filename
   url.final <- sub("s.", ".", thumbs.uri, fixed = TRUE)
   # Album title becomes folder title
