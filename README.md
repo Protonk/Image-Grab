@@ -18,16 +18,16 @@ Scripts to be added for different services as needed.
 
 #### commons-grab.R
 
-- Less simple. Basically done. Grabs categories from Wikimedia Commons. Uses rjson. Mediawiki API provides the full resolution URL if you ask nicely, so no fiddling about w/ XML. Comes with an argument to exclude very high res photos, defines as the top 10% in size for a given category.
-
+- Less simple. Grabs categories from MediaWiki Commons and downloads files in those categories. Uses XML to manage API calls. 
+ 
 #### flickr-grab.R
 
-- Also a bit less simple, but makes more sense than the commons script. Requires an API key because I figured scraping flickr would be laborious and uncool. 
+- Also a bit less simple. Requires an API key because I figured scraping flickr would be laborious and uncool. 
 
 
 ### Rough edges
 
-Both R scripts create files and directories in the working directory for R. If the category or album names are duplicated, this may result in files being written to the wrong place. More of a problem with imgur as categories on wikipedia by definition have distinct names. 
+These R scripts create files and directories in the working directory for R. If the category or album names are duplicated, this may result in files being written to the wrong place. More of a problem with imgur as categories on wikipedia by definition have distinct names. 
 
 ### License and such
 
