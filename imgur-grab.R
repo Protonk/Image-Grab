@@ -2,7 +2,7 @@ library(XML)
 library(RCurl)
 
 getimgurURL<- function(url) {
-  preparse <- htmlTreeParse(url, useInternalNodes = TRUE)
+  preparse <- htmlParse(url)
   # Some galleries use different containers
   if (xpathApply(preparse, "//body//div[@id='content']", xmlAttrs)[[1]][2] %in% "outside album") container <- "//body//img[@class='unloaded thumb-title-embed']"
   else container <- "//body//img[@class='unloaded thumb-title']"
