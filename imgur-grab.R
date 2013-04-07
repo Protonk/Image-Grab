@@ -1,22 +1,32 @@
 library(XML)
 library(RCurl)
 
-getimgurURL<- function(url) {
+getimgurURL<- function(url, destdir) {
   preparse <- htmlParse(url)
-  # Some galleries use different containers
-  if (xpathApply(preparse, "//body//div[@id='content']", xmlAttrs)[[1]][2] %in% "outside album") container <- "//body//img[@class='unloaded thumb-title-embed']"
-  else container <- "//body//img[@class='unloaded thumb-title']"
-  # Grab image urls. Walks through list of image divs
-  thumbs.uri <- unlist(xpathApply(preparse, container, xmlGetAttr, "data-src"))
-  # Thumbnails on imgur are denoted with a trailing "s" in the filename
-  url.final <- sub("s.", ".", thumbs.uri, fixed = TRUE)
   # Album title becomes folder title
-  dirtitle <- gsub("/", replacement = "-", (gsub("\n|\t", replacement = "", xpathApply(preparse, "//head//title", xmlValue)[[1]]))
-  if (file.exists(dirtitle)) return(NULL)
-  filetitles <- file.path(dirtitle, basename(url.final))
+  dirtitle <- gsub("\n|\t|(\\s{2}|\\s+$)+", 
+                   "", 
+                   xpathSApply(preparse, "//head//title", xmlValue))
+  dirtitle <- paste(gsub("/", "-", dirtitle), basename(url))
+  # set up directory, bail out if the file exists
+  dirtitle <- file.path(destdir, dirtitle)
+  if (file.exists(dirtitle)) {
+    return(NULL)
+  }
+  # Some galleries use different containers
+  container <- ifelse("outside album" %in% xpathSApply(preparse, "//body//div[@id='content']", xmlAttrs),
+                      "//body//img[@class='unloaded thumb-title-embed']",
+                      "//body//img[@class='unloaded thumb-title']")
+
+  # Grab image urls. Walks through list of image divs
+  thumbs.uri <- xpathSApply(preparse, container, xmlGetAttr, "data-src")
+  # Thumbnails on imgur are denoted with a trailing "s" in the filename
+  thumbs.uri <- sub("s.", ".", thumbs.uri, fixed = TRUE)
+  
+  filetitles <- file.path(dirtitle, basename(thumbs.uri))
   dir.create(dirtitle)
   file.create(filetitles)
-  for (i in seq_along(url.final)) {
-  	writeBin(getBinaryURL(url.final[i]), filetitles[i])
+  for (i in seq_along(thumbs.uri)) {
+  	writeBin(getBinaryURL(thumbs.uri[i]), filetitles[i])
   }
 }
